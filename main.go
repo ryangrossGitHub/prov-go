@@ -2,44 +2,52 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 )
 
+type InternalMetaData struct {
+		Uuid				string `json:"uuid"`
+		InsertTime	time.Time `json:"insertTime"`
+}
+
 type Entity struct {
-		Uuid				string	`json:"uuid"`
-		Id          string  `json:"id"`
-		WasDerivedFrom        string  `json:"wasDerivedFrom"`
+		InternalMetaData
+		Id          		string `json:"id"`
+		WasDerivedFrom  string `json:"wasDerivedFrom"`
     WasGeneratedBy	string `json:"wasGeneratedBy"`
 		WasAttributedTo string `json:"wasAttributedTo"`
 }
 
-var entities = make(map[string]Entity)
+var entityCollection = make(map[string]Entity)
 
-func getBundles(w http.ResponseWriter, r *http.Request) {
+func getProv(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(entities)
+    json.NewEncoder(w).Encode(entityCollection)
 }
 
-func addBundle(w http.ResponseWriter, r *http.Request) {
+func addProv(w http.ResponseWriter, r *http.Request) {
     var entity Entity
     var decoder = json.NewDecoder(r.Body)
 		err := decoder.Decode(&entity)
 		if err != nil {
     	w.WriteHeader(http.StatusInternalServerError)
-			panic(err)
+			log.Println(err)	
 		} else {
 			entity.Uuid = uuid.New().String()
-    	entities[entity.Uuid] = entity
+			entity.InsertTime = time.Now().UTC()
+    	entityCollection[entity.Uuid] = entity
     	w.WriteHeader(http.StatusCreated)
 		}
 }
 
 func main() {
     mux := http.NewServeMux()
-    mux.HandleFunc("/prov", getBundles)
-    mux.HandleFunc("/prov/put", addBundle)
+    mux.HandleFunc("/prov", getProv)
+    mux.HandleFunc("/prov/put", addProv)
     http.ListenAndServe(":8080", mux)
 }
 
