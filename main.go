@@ -1,9 +1,10 @@
 package main
 
 import (
-    "encoding/json"
-    "net/http"
-		"github.com/google/uuid"
+	"encoding/json"
+	"net/http"
+
+	"github.com/google/uuid"
 )
 
 type Entity struct {
@@ -23,16 +24,22 @@ func getBundles(w http.ResponseWriter, r *http.Request) {
 
 func addBundle(w http.ResponseWriter, r *http.Request) {
     var entity Entity
-    json.NewDecoder(r.Body).Decode(&entity)
-		entity.Uuid = uuid.New().String()
-    entities[entity.Uuid] = entity
-    w.WriteHeader(http.StatusCreated)
+    var decoder = json.NewDecoder(r.Body)
+		err := decoder.Decode(&entity)
+		if err != nil {
+    	w.WriteHeader(http.StatusInternalServerError)
+			panic(err)
+		} else {
+			entity.Uuid = uuid.New().String()
+    	entities[entity.Uuid] = entity
+    	w.WriteHeader(http.StatusCreated)
+		}
 }
 
 func main() {
     mux := http.NewServeMux()
-    mux.HandleFunc("/bundle", getBundles)
-    mux.HandleFunc("/bundle/add", addBundle)
+    mux.HandleFunc("/prov", getBundles)
+    mux.HandleFunc("/prov/put", addBundle)
     http.ListenAndServe(":8080", mux)
 }
 
