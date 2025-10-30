@@ -1,8 +1,3 @@
-# PROV-GO
-A service for inserting and retrieving provenance data over REST to a graph data store.
-
-### Example Usage
-```bash
 curl localhost:8080/prov/put \
 -H "Content-Type: application/json" \
 --data-binary @- << EOF 
@@ -33,4 +28,3 @@ curl localhost:8080/prov/put \
  ]
 }
 EOF
-```
